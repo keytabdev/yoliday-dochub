@@ -587,68 +587,59 @@ def restore_meilisearch(meilisearch_url, meilisearch_api_key, zip_file):
     log_output += "Restore process completed!\n"
     return log_output
 
-# Create Gradio interface
-def create_interface():
-    # Define interface components
-    with gr.Blocks(title="Meilisearch Backup/Restore") as app:
-        gr.Markdown("# Meilisearch Backup and Restore Tool")
-        
-        with gr.Tab("Backup"):
-            backup_url = gr.Textbox(label="Meilisearch URL", placeholder="https://searchek.dev.eklavya.me")
-            backup_key = gr.Textbox(label="Meilisearch API Key", placeholder="Your-API-Key", type="password")
-            backup_button = gr.Button("Backup")
-            backup_output = gr.Textbox(label="Backup Logs", lines=20)
-            backup_file = gr.File(label="Download Backup File")
-            
-            def run_backup(url, key):
-                if not url or not key:
-                    return None, "Please provide both Meilisearch URL and API Key"
-                
-                try:
-                    zip_path, log_output = backup_meilisearch(url, key)
-                    if zip_path:
-                        return zip_path, log_output
-                    else:
-                        return None, log_output
-                except Exception as e:
-                    return None, f"Error during backup: {str(e)}"
-            
-            backup_button.click(
-                run_backup, 
-                inputs=[backup_url, backup_key], 
-                outputs=[backup_file, backup_output]
-            )
-        
-        with gr.Tab("Restore"):
-            restore_url = gr.Textbox(label="Meilisearch URL", placeholder="https://searchek.dev.eklavya.me")
-            restore_key = gr.Textbox(label="Meilisearch API Key", placeholder="Your-API-Key", type="password")
-            restore_file = gr.File(label="Upload Backup File")
-            restore_button = gr.Button("Restore")
-            restore_output = gr.Textbox(label="Restore Logs", lines=20)
-            
-            def run_restore(url, key, file):
-                if not url or not key or not file:
-                    return "Please provide Meilisearch URL, API Key, and a backup zip file"
-                
-                try:
-                    log_output = restore_meilisearch(url, key, file.name)
-                    return log_output
-                except Exception as e:
-                    return f"Error during restore: {str(e)}"
-            
-            restore_button.click(
-                run_restore, 
-                inputs=[restore_url, restore_key, restore_file], 
-                outputs=[restore_output]
-            )
+# Define the UI functions
+def run_backup(url, key):
+    if not url or not key:
+        return None, "Please provide both Meilisearch URL and API Key"
     
-    return app
+    try:
+        zip_path, log_output = backup_meilisearch(url, key)
+        if zip_path:
+            return zip_path, log_output
+        else:
+            return None, log_output
+    except Exception as e:
+        return None, f"Error during backup: {str(e)}"
 
-# Launch the interface when run directly
+def run_restore(url, key, file):
+    if not url or not key or not file:
+        return "Please provide Meilisearch URL, API Key, and a backup zip file"
+    
+    try:
+        log_output = restore_meilisearch(url, key, file.name)
+        return log_output
+    except Exception as e:
+        return f"Error during restore: {str(e)}"
+
+# Create Gradio interface
+with gr.Blocks(title="Meilisearch Backup/Restore") as app:
+    gr.Markdown("# Meilisearch Backup and Restore Tool")
+    
+    with gr.Tab("Backup"):
+        backup_url = gr.Textbox(label="Meilisearch URL", placeholder="https://searchek.dev.eklavya.me")
+        backup_key = gr.Textbox(label="Meilisearch API Key", placeholder="Your-API-Key", type="password")
+        backup_button = gr.Button("Backup")
+        backup_output = gr.Textbox(label="Backup Logs", lines=20)
+        backup_file = gr.File(label="Download Backup File")
+        
+        backup_button.click(
+            run_backup, 
+            inputs=[backup_url, backup_key], 
+            outputs=[backup_file, backup_output]
+        )
+    
+    with gr.Tab("Restore"):
+        restore_url = gr.Textbox(label="Meilisearch URL", placeholder="https://searchek.dev.eklavya.me")
+        restore_key = gr.Textbox(label="Meilisearch API Key", placeholder="Your-API-Key", type="password")
+        restore_file = gr.File(label="Upload Backup File")
+        restore_button = gr.Button("Restore")
+        restore_output = gr.Textbox(label="Restore Logs", lines=20)
+        
+        restore_button.click(
+            run_restore, 
+            inputs=[restore_url, restore_key, restore_file], 
+            outputs=[restore_output]
+        )
+
 if __name__ == "__main__":
-    print("Starting Meilisearch Backup/Restore Tool...")
-    app = create_interface()
-    print("Interface created. Launching...")
-
-    app.launch(server_name="0.0.0.0", server_port=7860)
-    print(" Interface launched and running at http://0.0.0.0:7860")
+    app.launch(share=False, server_name="0.0.0.0", server_port=7860)
